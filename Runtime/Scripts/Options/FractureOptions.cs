@@ -35,6 +35,12 @@ public class FractureOptions
     [Tooltip("Offset to apply to texture coordinates")]
     public Vector2 textureOffset;
 
+    [HideInInspector]
+    public Vector3 impactPoint;
+
+    [HideInInspector]
+    public Vector3 impactDirection;
+
     public FractureOptions()
     {
         this.fragmentCount = 10;
@@ -46,5 +52,7 @@ public class FractureOptions
         this.insideMaterial = null;
         this.textureScale = Vector2.one;
         this.textureOffset = Vector2.zero;
+        this.impactPoint = Vector3.zero;
+        this.impactDirection = Vector3.up;
     }
 }

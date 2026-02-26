@@ -5,7 +5,7 @@ using UnityEngine.Events;
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(Rigidbody))]
-public class Fracture : MonoBehaviour
+public class VoronoiFracture : MonoBehaviour
 {
     public TriggerOptions triggerOptions;
     public FractureOptions fractureOptions;
@@ -45,7 +45,13 @@ public class Fracture : MonoBehaviour
 
     public void CauseFracture()
     {
+        Debug.Log("[VoronoiFracture] CauseFracture called.", this);
         callbackOptions.CallOnFracture(null, gameObject, transform.position);
+        
+        // Set default impact information for manual fracturing
+        fractureOptions.impactPoint = Vector3.zero; // Center of object in local space
+        fractureOptions.impactDirection = Vector3.up; // Default direction
+        
         this.ComputeFracture();
     }
 
@@ -70,6 +76,7 @@ public class Fracture : MonoBehaviour
         {
             if (collision.contactCount > 0)
             {
+                Debug.Log("[VoronoiFracture] OnCollisionEnter triggered.", this);
                 // Collision force must exceed the minimum force (F = I / T)
                 var contact = collision.contacts[0];
                 float collisionForce = collision.impulse.magnitude / Time.fixedDeltaTime;
@@ -82,7 +89,15 @@ public class Fracture : MonoBehaviour
                 if (collisionForce > triggerOptions.minimumCollisionForce &&
                    (triggerOptions.filterCollisionsByTag && tagAllowed))
                 {
+                    Debug.Log("[VoronoiFracture] Collision meets fracture criteria.", this);
                     callbackOptions.CallOnFracture(contact.otherCollider, gameObject, contact.point);
+                    
+                    // Set impact information for Voronoi fracturing
+                    Vector3 impactPointLocal = transform.InverseTransformPoint(contact.point);
+                    Vector3 impactDirLocal = transform.InverseTransformDirection(collision.impulse.normalized);
+                    fractureOptions.impactPoint = impactPointLocal;
+                    fractureOptions.impactDirection = impactDirLocal;
+                    
                     this.ComputeFracture();
                 }
             }
@@ -98,7 +113,15 @@ public class Fracture : MonoBehaviour
 
             if (triggerOptions.filterCollisionsByTag && tagAllowed)
             {
+                Debug.Log("[VoronoiFracture] OnTriggerEnter meets fracture criteria.", this);
                 callbackOptions.CallOnFracture(collider, gameObject, transform.position);
+                
+                // Set impact information for Voronoi fracturing
+                Vector3 impactPointLocal = transform.InverseTransformPoint(transform.position);
+                Vector3 impactDirLocal = Vector3.up; // Default direction for trigger-based fractures
+                fractureOptions.impactPoint = impactPointLocal;
+                fractureOptions.impactDirection = impactDirLocal;
+                
                 this.ComputeFracture();
             }
         }
@@ -110,7 +133,15 @@ public class Fracture : MonoBehaviour
         {
             if (Input.GetKeyDown(triggerOptions.triggerKey))
             {
+                Debug.Log("[VoronoiFracture] Keyboard trigger fracture.", this);
                 callbackOptions.CallOnFracture(null, gameObject, transform.position);
+                
+                // Set impact information for Voronoi fracturing
+                Vector3 impactPointLocal = Vector3.zero; // Center of object
+                Vector3 impactDirLocal = Vector3.up; // Default direction
+                fractureOptions.impactPoint = impactPointLocal;
+                fractureOptions.impactDirection = impactDirLocal;
+                
                 this.ComputeFracture();
             }
         }
@@ -122,10 +153,12 @@ public class Fracture : MonoBehaviour
     /// <returns></returns>
     private void ComputeFracture()
     {
+        Debug.Log("[VoronoiFracture] ComputeFracture called.", this);
         var mesh = this.GetComponent<MeshFilter>().sharedMesh;
 
         if (mesh != null)
         {
+            Debug.Log($"[VoronoiFracture] Mesh found. Fragments={fractureOptions.fragmentCount} Async={fractureOptions.asynchronous}", this);
             // If the fragment root object has not yet been created, create it now
             if (this.fragmentRoot == null)
             {
@@ -143,7 +176,7 @@ public class Fracture : MonoBehaviour
 
             if (fractureOptions.asynchronous)
             {
-                StartCoroutine(Fragmenter.FractureAsync(
+                StartCoroutine(VoronoiFragmenter.FractureAsync(
                     this.gameObject,
                     this.fractureOptions,
                     fragmentTemplate,
@@ -170,7 +203,7 @@ public class Fracture : MonoBehaviour
             }
             else
             {
-                Fragmenter.Fracture(this.gameObject,
+                VoronoiFragmenter.Fracture(this.gameObject,
                                     this.fractureOptions,
                                     fragmentTemplate,
                                     this.fragmentRoot.transform);
@@ -249,7 +282,7 @@ public class Fracture : MonoBehaviour
     /// <param name="obj">The GameObject to copy the component to</param>
     private void CopyFractureComponent(GameObject obj)
     {
-        var fractureComponent = obj.AddComponent<Fracture>();
+        var fractureComponent = obj.AddComponent<VoronoiFracture>();
 
         fractureComponent.triggerOptions = this.triggerOptions;
         fractureComponent.fractureOptions = this.fractureOptions;
