@@ -76,7 +76,7 @@ public class VoronoiFracture : MonoBehaviour
         {
             if (collision.contactCount > 0)
             {
-                Debug.Log("[VoronoiFracture] OnCollisionEnter triggered.", this);
+                //Debug.Log("[VoronoiFracture] OnCollisionEnter triggered.", this);
                 // Collision force must exceed the minimum force (F = I / T)
                 var contact = collision.contacts[0];
                 float collisionForce = collision.impulse.magnitude / Time.fixedDeltaTime;
