@@ -33,6 +33,11 @@
             "displayName": "SliceDemo",
             "description": "Demo scene for the Slice script",
             "path": "Samples~/SliceDemo"
-        }
+        },
+    {
+        "displayName": "VoronoiFractureDemo",
+        "description": "Demo scene for the VoronoiFracture script",
+        "path": "Samples~/VoronoiFracture"
+    }
     ]
 }
